@@ -25,7 +25,11 @@
                         <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_10.jpg" alt="">
                         <div>
                             <h2>{{ item.name }}</h2>
-                            <h3>
+                            <h3 v-if="item.status == 0">
+                                <span class="status orange"></span>
+                                unread
+                            </h3>
+                            <h3 v-else>
                                 <span class="status green"></span>
                                 read
                             </h3>
@@ -43,7 +47,7 @@
                     </div>
                     <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/ico_star.png" alt="">
                 </header>
-                <Box :currentPeerUser="currentPeerUser" v-if="currentPeerUser" @updateStatusMessage="updateStatusUser">
+                <Box :currentPeerUser="currentPeerUser" v-if="currentPeerUser">
                 </Box>
             </main>
         </div>
@@ -68,7 +72,7 @@ export default {
             photoURL: localStorage.getItem("photoURL"),
             userChatBox: '',
             userUrlChatBox: '',
-            statusMessages: '',
+            statusMessages: [],
         }
     },
 
@@ -81,22 +85,54 @@ export default {
             if (result.docs.length > 0) {
                 let listUsers = result.docs;
                 listUsers.forEach((item, index) => {
-                    this.searchUsers.push({
+                    const user = {
                         key: index,
                         documentKey: item.id,
                         id: item.data().id,
                         name: item.data().name,
                         URL: item.data().URL,
                         description: item.data().description
+                    }
+
+                    this.statusMessages.forEach(element => {
+                        if (item.data().id == element.idFrom) {
+                            user.status = element.status;
+                            user.groupId = element.groupId;
+                            user.idFrom = element.idFrom;
+                            user.idTo = element.idTo;
+                            console.log('user status 0', user);
+                        } else {
+                            user.status == 1;
+                            user.groupId = '';
+                            user.idFrom = '';
+                            user.idTo = '';
+                        }
                     });
+
+                    this.searchUsers.push(user);
                 });
             }
         },
 
-        letsChat(item) {
+        async letsChat(item) {
             this.currentPeerUser = item;
             this.userChatBox = item.name;
             this.userUrlChatBox = item.URL;
+
+
+            if (item.status == 0 && item.idTo != item.id) {
+                await firebase
+                    .firestore()
+                    .collection("Messages")
+                    .doc(item.groupId)
+                    .set({
+                        status: 1,
+                        idFrom: item.idFrom,
+                        idTo: item.idTo
+                    })
+                console.log('readed');
+            }
+            item.status = 1;
         },
 
         logOut() {
@@ -108,22 +144,26 @@ export default {
             });;
         },
 
-        updateStatusUser(user) {
-        },
-
         async updateStatusMessage() {
             await firebase.firestore().collection('Messages').onSnapshot(snap => {
                 let changes = snap.docChanges();
-                console.log(changes);
-                // this.statusMessages = changes
-                // console.log(this.statusMessages);
+                console.log('changes', changes);
+                console.log('status message', changes[0].doc.data());
+                console.log('id user', this.currentUserId);
+                this.statusMessages = [];
                 changes.forEach((item, itemIndex) => {
                     this.statusMessages.push({
                         groupId: item.doc.id,
-                        idFrom: item.doc.data().idForm,
+                        idFrom: item.doc.data().idFrom,
                         idTo: item.doc.data().idTo,
                         status: item.doc.data().status
                     });
+                    if (item.type === "modified") {
+                        this.updateStatusMessage();
+                    }
+                })
+                this.statusMessages = this.statusMessages.filter((item, index) => {
+                    return item.status == 0 && item.idTo == this.currentUserId;
                 })
             })
         }
@@ -131,8 +171,8 @@ export default {
 
     created() {
         if (!localStorage.hasOwnProperty("id")) this.$router.push({ name: "Login" });
-        this.getUserList();
         this.updateStatusMessage()
+        this.getUserList();
     }
 }
 </script>

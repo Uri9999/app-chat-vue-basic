@@ -61,12 +61,6 @@ export default {
                 content: content.trim()
             };
 
-            const defaultStatus = {
-                status: 0,
-                idFrom: this.currentUserId,
-                idTo: this.currentPeerUser.id
-            }
-
             await firebase
                 .firestore()
                 .collection("Messages")
@@ -86,23 +80,9 @@ export default {
                     idFrom: this.currentUserId,
                     idTo: this.currentPeerUser.id
                 })
-            // firebase
-            //     .firestore()
-            //     .collection("Messages")
-            //     .doc(this.groupChatId).set({ status: 0 })
-            // const events = firebase.firestore().collection('Messages').get()
-            //     .then(querySnapshot => {
-            //         console.log('snap', querySnapshot);
-            //         querySnapshot.docs.map(doc => {
-            //             console.log('LOG 1', doc.data());
-            //             console.log('LOG 1', doc.id);
-            //             // return doc.data();
-            //         });
-            //     });
         },
 
         getMessages() {
-            console.log("call coming");
             this.listMessage = [];
             // let groupChatId = `${this.currentPeerUser.id} + ${this.currentUserId}`;
             let groupChatId = [this.currentPeerUser.id, this.currentUserId]
@@ -119,7 +99,6 @@ export default {
                         this.groupChatId = groupChatId;
                         Snapshot.docChanges().forEach(res => {
                             this.listMessage.push(res.doc.data());
-                            this.$emit('updateStatusMessage', res.doc.data())
                         });
                     } else {
                         let groupChatId = [this.currentPeerUser.id, this.currentUserId]
