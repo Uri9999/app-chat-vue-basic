@@ -15,7 +15,8 @@
         </ul>
         <footer>
             <textarea placeholder="Type your message" v-model="inputValue"></textarea>
-            <a href="#" @click.prevent="sendMessage(inputValue)">Send</a>
+            <!-- <a href="#" :disabled="disableBtn ? disabled : ''" @click.prevent="sendMessage(inputValue)">Send</a> -->
+            <input type="button" value="Send" @click.prevent="sendMessage(inputValue)">
         </footer>
     </div>
 </template>
@@ -33,7 +34,7 @@ export default {
             inputValue: "",
             photoURL: localStorage.getItem("photoURL"),
             listMessage: [],
-            groupChatId: null
+            groupChatId: null,
         }
     },
 
@@ -47,6 +48,7 @@ export default {
 
     methods: {
         async sendMessage(content) {
+            console.log('send ok');
             if (content.trim() === "") {
                 return;
             }
@@ -61,7 +63,8 @@ export default {
                 content: content.trim()
             };
 
-            await firebase
+            console.log(timestamp);
+            const result = await firebase
                 .firestore()
                 .collection("Messages")
                 .doc(this.groupChatId)
@@ -71,6 +74,8 @@ export default {
                 .then(() => {
                     this.inputValue = "";
                 });
+                console.log(result)
+                console.log('send done');
             await firebase
                 .firestore()
                 .collection("Messages")
@@ -111,7 +116,6 @@ export default {
                                     // if (res.type === "added") { 
                                     this.listMessage.push(res.doc.data());
                                     // }
-                                    this.$emit('updateStatusMessage', res.doc.data())
                                 });
                             });
                     }
