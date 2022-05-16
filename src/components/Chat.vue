@@ -149,14 +149,25 @@ export default {
                 let changes = snap.docChanges();
                 this.statusMessages = [];
                 changes.forEach((item) => {
-                    this.statusMessages.push({
-                        groupId: item.doc.id,
-                        idFrom: item.doc.data().idFrom,
-                        idTo: item.doc.data().idTo,
-                        status: item.doc.data().status
-                    });
+                    if (item.type == 'added') {
+                        this.statusMessages.push({
+                            groupId: item.doc.id,
+                            idFrom: item.doc.data().idFrom,
+                            idTo: item.doc.data().idTo,
+                            status: item.doc.data().status
+                        });
+                    }
                     if (item.type === "modified") {
-                        this.updateStatusMessage();
+                        this.searchUsers.forEach(element => {
+                            if (element.id == item.doc.data().idFrom) {
+                                element.status = item.doc.data().status;
+                                element.groupId = item.doc.id;
+                                element.idFrom = item.doc.data().idFrom;
+                                element.idTo = item.doc.data().idTo;
+                                element.name = element.name + ' ';
+                                console.log('status updated', element);
+                            }
+                        })
                     }
                 })
                 this.statusMessages = this.statusMessages.filter((item, index) => {
