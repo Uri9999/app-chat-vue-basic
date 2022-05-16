@@ -1,6 +1,6 @@
 <template>
     <div class="box">
-        <ul id="chat">
+        <ul id="chat" v-on:scroll="scrollFunction">
             <li class="text-inner" :class="item.idFrom === currentUserId ? 'me' : 'you'" v-for="item in listMessage"
                 :key="item.id">
                 <div class="entete">
@@ -15,8 +15,7 @@
         </ul>
         <footer>
             <textarea placeholder="Type your message" v-model="inputValue"></textarea>
-            <!-- <a href="#" :disabled="disableBtn ? disabled : ''" @click.prevent="sendMessage(inputValue)">Send</a> -->
-            <input type="button" value="Send" @click.prevent="sendMessage(inputValue)">
+            <input type="button" :disabled="disableBtn" value="Send" @click.prevent="sendMessage(inputValue)">
         </footer>
     </div>
 </template>
@@ -35,6 +34,7 @@ export default {
             photoURL: localStorage.getItem("photoURL"),
             listMessage: [],
             groupChatId: null,
+            disableBtn: false,
         }
     },
 
@@ -48,7 +48,8 @@ export default {
 
     methods: {
         async sendMessage(content) {
-            console.log('send ok');
+            this.disableBtn = true,
+                console.log('send ok');
             if (content.trim() === "") {
                 return;
             }
@@ -63,7 +64,6 @@ export default {
                 content: content.trim()
             };
 
-            console.log(timestamp);
             const result = await firebase
                 .firestore()
                 .collection("Messages")
@@ -74,8 +74,8 @@ export default {
                 .then(() => {
                     this.inputValue = "";
                 });
-                console.log(result)
-                console.log('send done');
+            console.log(result)
+            console.log('send done');
             await firebase
                 .firestore()
                 .collection("Messages")
@@ -85,11 +85,11 @@ export default {
                     idFrom: this.currentUserId,
                     idTo: this.currentPeerUser.id
                 })
+            this.disableBtn = false;
         },
 
         getMessages() {
             this.listMessage = [];
-            // let groupChatId = `${this.currentPeerUser.id} + ${this.currentUserId}`;
             let groupChatId = [this.currentPeerUser.id, this.currentUserId]
             groupChatId = groupChatId.sort().join('+');
             firebase
@@ -101,7 +101,9 @@ export default {
                     if (Snapshot.docChanges().length > 0) {
                         this.groupChatId = groupChatId;
                         Snapshot.docChanges().forEach(res => {
-                            this.listMessage.push(res.doc.data());
+                            if (res.type === "added") {
+                                this.listMessage.push(res.doc.data());
+                            }
                         });
                     } else {
                         let groupChatId = [this.currentPeerUser.id, this.currentUserId]
@@ -113,9 +115,9 @@ export default {
                             .collection(this.groupChatId)
                             .onSnapshot(Snapshot => {
                                 Snapshot.docChanges().forEach(res => {
-                                    // if (res.type === "added") { 
-                                    this.listMessage.push(res.doc.data());
-                                    // }
+                                    if (res.type === "added") {
+                                        this.listMessage.push(res.doc.data());
+                                    }
                                 });
                             });
                     }
@@ -125,6 +127,22 @@ export default {
         createGroupId(peerUserId, currentUserId) {
             let groupChatId = [peerUserId, currentUserId]
             return groupChatId.sort().join('+');
+        },
+
+        async scrollFunction(e) {
+            var element = e.target;
+            if (element.scrollHeight - element.scrollTop === element.clientHeight) {
+                console.log('scroll done');
+                await firebase
+                    .firestore()
+                    .collection("Messages")
+                    .doc(this.groupChatId)
+                    .set({
+                        status: 1,
+                        idFrom: this.currentPeerUser.id,
+                        idTo: this.currentUserId
+                    })
+            }
         }
     },
 

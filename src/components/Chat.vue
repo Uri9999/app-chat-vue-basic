@@ -119,20 +119,19 @@ export default {
             this.userChatBox = item.name;
             this.userUrlChatBox = item.URL;
 
-
-            if (item.status == 0 && item.idTo != item.id) {
-                await firebase
-                    .firestore()
-                    .collection("Messages")
-                    .doc(item.groupId)
-                    .set({
-                        status: 1,
-                        idFrom: item.idFrom,
-                        idTo: item.idTo
-                    })
-                console.log('readed');
-            }
-            item.status = 1;
+            // if (item.status == 0 && item.idTo != item.id) {
+            //     await firebase
+            //         .firestore()
+            //         .collection("Messages")
+            //         .doc(item.groupId)
+            //         .set({
+            //             status: 1,
+            //             idFrom: item.idFrom,
+            //             idTo: item.idTo
+            //         })
+            //     console.log('readed');
+            // }
+            // item.status = 1;
         },
 
         logOut() {
