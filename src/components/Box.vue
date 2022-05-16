@@ -94,8 +94,6 @@ export default {
                 .collection(groupChatId)
                 .onSnapshot(Snapshot => {
                     if (Snapshot.docChanges().length > 0) {
-                        console.log('> 0 group', this.groupChatId);
-                        console.log('length > 0');
                         this.groupChatId = groupChatId;
                         Snapshot.docChanges().forEach(res => {
                             this.listMessage.push(res.doc.data());
@@ -110,8 +108,6 @@ export default {
                             .collection(this.groupChatId)
                             .onSnapshot(Snapshot => {
                                 Snapshot.docChanges().forEach(res => {
-                                    console.log('< 0 group', this.groupChatId);
-                                    console.log('length < 0');
                                     // if (res.type === "added") { 
                                     this.listMessage.push(res.doc.data());
                                     // }
@@ -131,8 +127,6 @@ export default {
     mounted() {
         if (!localStorage.hasOwnProperty("id")) this.$router.push({ name: "Login" });
         this.getMessages();
-        console.log(this.listMessage);
-        console.log(this.currentUserId);
     }
 }
 </script>

@@ -147,11 +147,8 @@ export default {
         async updateStatusMessage() {
             await firebase.firestore().collection('Messages').onSnapshot(snap => {
                 let changes = snap.docChanges();
-                console.log('changes', changes);
-                console.log('status message', changes[0].doc.data());
-                console.log('id user', this.currentUserId);
                 this.statusMessages = [];
-                changes.forEach((item, itemIndex) => {
+                changes.forEach((item) => {
                     this.statusMessages.push({
                         groupId: item.doc.id,
                         idFrom: item.doc.data().idFrom,
